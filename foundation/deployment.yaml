@@ -1,15 +1,3 @@
 template-file-path: foundation/foundation.yaml
-stack-name: lab16-foundation
-region: us-east-1
-capabilities:
-  - CAPABILITY_IAM
-  - CAPABILITY_NAMED_IAM
-parameters:
-  ProjectName: lab16
-  GitHubOrg: nlenjibi
-  GitHubRepo: lab16
-  DevArtifactsBucketName: sam-dev-artifacts
-  ProdArtifactsBucketName: sam-prod-artifacts
-tags:
-  Project: lab16
-  ManagedBy: CloudFormation-GitSync
+parameters: {}
+tags: {}
