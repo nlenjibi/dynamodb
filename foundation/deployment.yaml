@@ -1,5 +1,5 @@
 template-file-path: foundation/foundation.yaml
-stack-name: lab16-foundation
+stack-name: bem16-foundation
 region: us-east-1
 capabilities:
   - CAPABILITY_IAM
@@ -7,9 +7,9 @@ capabilities:
 parameters:
   ProjectName: lab16
   GitHubOrg: nlenjibi
-  GitHubRepo: lab16
+  GitHubRepo: bem16
   DevArtifactsBucketName: sam-dev-artifacts
   ProdArtifactsBucketName: sam-prod-artifacts
 tags:
-  Project: lab16
+  Project: bem16
   ManagedBy: CloudFormation-GitSync
