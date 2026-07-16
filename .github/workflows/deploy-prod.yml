@@ -1,0 +1,39 @@
+name: Deploy Prod
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/setup-sam@v2
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+
+      - name: Build
+        run: sam build
+
+      - name: Deploy
+        run: |
+          sam deploy \
+          --stack-name dynamodb-prod \
+          --parameter-overrides Environment=prod \
+          --s3-bucket sam-prod-artifacts \
+          --capabilities CAPABILITY_IAM \
+          --no-confirm-changeset

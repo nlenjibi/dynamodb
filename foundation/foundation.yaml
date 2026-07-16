@@ -1,0 +1,149 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Lab16 | Foundation stack — GitHub OIDC provider and a single least-privilege
+  IAM role, shared by GitHub Actions / CloudFormation Git Sync to deploy both
+  the dev and prod DynamoDB app stacks. Deploy this BEFORE template.yaml.
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: lab16
+  GitHubOrg:
+    Type: String
+    Description: GitHub organisation or username that owns the app repository (e.g. nlenjibi)
+  GitHubRepo:
+    Type: String
+    Description: GitHub repository name (e.g. lab16)
+  DevArtifactsBucketName:
+    Type: String
+    Default: sam-dev-artifacts
+  ProdArtifactsBucketName:
+    Type: String
+    Default: sam-prod-artifacts
+
+Resources:
+
+  # ── GitHub OIDC Identity Provider ─────────────────────────────
+  # Lets GitHub Actions / Git Sync exchange a short-lived OIDC token for AWS
+  # credentials via sts:AssumeRoleWithWebIdentity — no long-lived access keys.
+  GithubOidcProvider:
+    Type: AWS::IAM::OIDCProvider
+    Properties:
+      Url: https://token.actions.githubusercontent.com
+      ClientIdList:
+        - sts.amazonaws.com
+      ThumbprintList:
+        - 6938fd4d98bab03faadb97b34396831e3780aea1
+        - 1c58a3a8518e8759bf075b76b750d4f2df264fcd
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-github-oidc-provider"
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: ManagedBy
+          Value: CloudFormation-GitSync
+
+  # ── GitHub Actions IAM Role (shared: dev + prod) ───────────────
+  # One role, trusted by this GitHub repo, used by both the dev and prod
+  # deploy workflows. Least-privilege: scoped explicitly to the dev and
+  # prod CloudFormation stacks, DynamoDB tables, and artifacts buckets —
+  # nothing broader.
+  GitHubActionsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${ProjectName}-github-actions-role"
+      Description: Assumed by GitHub Actions via OIDC to deploy the SAM DynamoDB stack (dev + prod)
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: !Ref GithubOidcProvider
+            Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringEquals:
+                token.actions.githubusercontent.com:aud: sts.amazonaws.com
+              StringLike:
+                token.actions.githubusercontent.com:sub: !Sub "repo:${GitHubOrg}/${GitHubRepo}:*"
+      Policies:
+        - PolicyName: cloudformation-deploy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Sid: CloudFormationDeploy
+                Effect: Allow
+                Action:
+                  - cloudformation:CreateStack
+                  - cloudformation:UpdateStack
+                  - cloudformation:DeleteStack
+                  - cloudformation:DescribeStacks
+                  - cloudformation:DescribeStackEvents
+                  - cloudformation:DescribeStackResource
+                  - cloudformation:DescribeStackResources
+                  - cloudformation:ListStackResources
+                  - cloudformation:GetTemplate
+                  - cloudformation:GetTemplateSummary
+                  - cloudformation:ValidateTemplate
+                  - cloudformation:CreateChangeSet
+                  - cloudformation:DescribeChangeSet
+                  - cloudformation:ExecuteChangeSet
+                  - cloudformation:DeleteChangeSet
+                Resource:
+                  - !Sub "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/dynamodb-dev/*"
+                  - !Sub "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/dynamodb-prod/*"
+        - PolicyName: dynamodb-table-lifecycle
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Sid: DynamoDbTableLifecycle
+                Effect: Allow
+                Action:
+                  - dynamodb:CreateTable
+                  - dynamodb:DeleteTable
+                  - dynamodb:DescribeTable
+                  - dynamodb:UpdateTable
+                  - dynamodb:TagResource
+                  - dynamodb:UntagResource
+                  - dynamodb:ListTagsOfResource
+                  - dynamodb:DescribeTimeToLive
+                  - dynamodb:UpdateTimeToLive
+                  - dynamodb:DescribeContinuousBackups
+                Resource:
+                  - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/product-catalog-dev"
+                  - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/product-catalog-dev/index/*"
+                  - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/product-catalog-prod"
+                  - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/product-catalog-prod/index/*"
+        - PolicyName: sam-artifacts-buckets
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Sid: SamArtifactsBuckets
+                Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:GetObject
+                  - s3:GetBucketLocation
+                  - s3:ListBucket
+                Resource:
+                  - !Sub "arn:aws:s3:::${DevArtifactsBucketName}"
+                  - !Sub "arn:aws:s3:::${DevArtifactsBucketName}/*"
+                  - !Sub "arn:aws:s3:::${ProdArtifactsBucketName}"
+                  - !Sub "arn:aws:s3:::${ProdArtifactsBucketName}/*"
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-github-actions-role"
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: ManagedBy
+          Value: CloudFormation-GitSync
+
+Outputs:
+  GitHubActionsRoleArn:
+    Value: !GetAtt GitHubActionsRole.Arn
+    Export:
+      Name: !Sub "${ProjectName}-GitHubActionsRoleArn"
+
+  OidcProviderArn:
+    Value: !Ref GithubOidcProvider
+    Export:
+      Name: !Sub "${ProjectName}-OidcProviderArn"
