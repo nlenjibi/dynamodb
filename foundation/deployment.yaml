@@ -1,3 +1,15 @@
 template-file-path: foundation/foundation.yaml
-parameters: {}
-tags: {}
+stack-name: bem16-foundation
+region: eu-east-1
+capabilities:
+  - CAPABILITY_IAM
+  - CAPABILITY_NAMED_IAM
+parameters:
+  ProjectName: bem16
+  GitHubOrg: nlenjibi
+  GitHubRepo: dynamodb
+  DevArtifactsBucketName: sam-dev-artifacts
+  ProdArtifactsBucketName: sam-prod-artifacts
+tags:
+  Project: bem16
+  ManagedBy: CloudFormation-GitSync
