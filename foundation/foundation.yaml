@@ -134,6 +134,12 @@ Resources:
                 Resource:
                   - !Sub "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/dynamodb-dev/*"
                   - !Sub "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/dynamodb-prod/*"
+              - Sid: SamTransformAccess
+                Effect: Allow
+                Action:
+                  - cloudformation:CreateChangeSet
+                Resource:
+                  - !Sub "arn:aws:cloudformation:${AWS::Region}:aws:transform/Serverless-2016-10-31"
         - PolicyName: dynamodb-table-lifecycle
           PolicyDocument:
             Version: '2012-10-17'
