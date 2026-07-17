@@ -43,7 +43,7 @@ Resources:
         - Key: ManagedBy
           Value: CloudFormation-GitSync
 
-  # ── GitHub Actions IAM Role (shared: dev + prod) ───────────────
+  # ── GitHub Actions IAM Role (shared: dev + prod) 
   # One role, trusted by this GitHub repo, used by both the dev and prod
   # deploy workflows. Least-privilege: scoped explicitly to the dev and
   # prod CloudFormation stacks, DynamoDB tables, and artifacts buckets —
