@@ -1,6 +1,6 @@
 template-file-path: foundation/foundation.yaml
 stack-name: bem16-foundation
-region: eu-east-1
+region: eu-west-1
 capabilities:
   - CAPABILITY_IAM
   - CAPABILITY_NAMED_IAM
