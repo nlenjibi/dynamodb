@@ -7,7 +7,7 @@ capabilities:
 parameters:
   ProjectName: bem16
   GitHubOrg: nlenjibi
-  GitHubRepo: bem16
+  GitHubRepo: dynamodb
   DevArtifactsBucketName: sam-dev-artifacts
   ProdArtifactsBucketName: sam-prod-artifacts
 tags:
