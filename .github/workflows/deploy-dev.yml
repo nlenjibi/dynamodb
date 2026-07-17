@@ -3,7 +3,7 @@ name: Deploy Dev
 on:
   push:
     branches:
-      - dev
+      - main
 
 jobs:
   deploy:
@@ -40,6 +40,6 @@ jobs:
           sam deploy \
           --stack-name dynamodb-dev \
           --parameter-overrides Environment=dev \
-          --s3-bucket sam-dev-artifacts \
+          --s3-bucket bem-sam-dev-artifacts \
           --capabilities CAPABILITY_IAM \
           --no-confirm-changeset

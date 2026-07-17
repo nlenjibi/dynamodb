@@ -5,7 +5,7 @@ stack_name = "dynamodb-dev"
 region = "eu-west-1"
 capabilities = "CAPABILITY_IAM"
 parameter_overrides = "Environment=dev"
-s3_bucket = "sam-dev-artifacts"
+s3_bucket = "bem-sam-dev-artifacts"
 confirm_changeset = false
 
 [prod.deploy.parameters]
@@ -13,5 +13,5 @@ stack_name = "dynamodb-prod"
 region = "eu-west-1"
 capabilities = "CAPABILITY_IAM"
 parameter_overrides = "Environment=prod"
-s3_bucket = "sam-prod-artifacts"
+s3_bucket = "bem-sam-prod-artifacts"
 confirm_changeset = false

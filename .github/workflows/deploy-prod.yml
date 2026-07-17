@@ -34,6 +34,6 @@ jobs:
           sam deploy \
           --stack-name dynamodb-prod \
           --parameter-overrides Environment=prod \
-          --s3-bucket sam-prod-artifacts \
+          --s3-bucket bem-sam-prod-artifacts \
           --capabilities CAPABILITY_IAM \
           --no-confirm-changeset

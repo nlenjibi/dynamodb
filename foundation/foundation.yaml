@@ -16,10 +16,10 @@ Parameters:
     Description: GitHub repository name (e.g. lab16)
   DevArtifactsBucketName:
     Type: String
-    Default: sam-dev-artifacts
+    Default: bem-sam-dev-artifacts
   ProdArtifactsBucketName:
     Type: String
-    Default: sam-prod-artifacts
+    Default: bem-sam-prod-artifacts
 
 Resources:
 
@@ -43,7 +43,48 @@ Resources:
         - Key: ManagedBy
           Value: CloudFormation-GitSync
 
-  # ── GitHub Actions IAM Role (shared: dev + prod) 
+  # ── SAM Deployment Artifacts Buckets ───────────────────────────
+  # sam deploy uploads packaged templates/code here before creating the
+  # dev/prod CloudFormation stacks.
+  DevArtifactsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref DevArtifactsBucketName
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: ManagedBy
+          Value: CloudFormation-GitSync
+
+  ProdArtifactsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref ProdArtifactsBucketName
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: ManagedBy
+          Value: CloudFormation-GitSync
+
+  # ── GitHub Actions IAM Role (shared: dev + prod)
   # One role, trusted by this GitHub repo, used by both the dev and prod
   # deploy workflows. Least-privilege: scoped explicitly to the dev and
   # prod CloudFormation stacks, DynamoDB tables, and artifacts buckets —
