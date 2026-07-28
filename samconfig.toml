@@ -7,6 +7,7 @@ capabilities = "CAPABILITY_IAM"
 parameter_overrides = "Environment=dev"
 s3_bucket = "bem-sam-dev-artifacts"
 confirm_changeset = false
+fail_on_empty_changeset = false
 
 [prod.deploy.parameters]
 stack_name = "dynamodb-prod"
@@ -15,3 +16,4 @@ capabilities = "CAPABILITY_IAM"
 parameter_overrides = "Environment=prod"
 s3_bucket = "bem-sam-prod-artifacts"
 confirm_changeset = false
+fail_on_empty_changeset = false

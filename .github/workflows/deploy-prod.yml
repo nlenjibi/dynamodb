@@ -5,10 +5,15 @@ on:
     branches:
       - main
 
+concurrency:
+  group: prod-deployment
+  cancel-in-progress: false
+
 jobs:
   deploy:
 
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     permissions:
       id-token: write
@@ -25,15 +30,11 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ secrets.AWS_REGION }}
 
+      - name: Validate
+        run: sam validate
 
       - name: Build
         run: sam build
 
       - name: Deploy
-        run: |
-          sam deploy \
-          --stack-name dynamodb-prod \
-          --parameter-overrides Environment=prod \
-          --s3-bucket bem-sam-prod-artifacts \
-          --capabilities CAPABILITY_IAM \
-          --no-confirm-changeset
+        run: sam deploy --config-env prod

@@ -23,26 +23,6 @@ Parameters:
 
 Resources:
 
-  # ── GitHub OIDC Identity Provider ─────────────────────────────
-  # Lets GitHub Actions / Git Sync exchange a short-lived OIDC token for AWS
-  # credentials via sts:AssumeRoleWithWebIdentity — no long-lived access keys.
-  GithubOidcProvider:
-    Type: AWS::IAM::OIDCProvider
-    Properties:
-      Url: https://token.actions.githubusercontent.com
-      ClientIdList:
-        - sts.amazonaws.com
-      ThumbprintList:
-        - 6938fd4d98bab03faadb97b34396831e3780aea1
-        - 1c58a3a8518e8759bf075b76b750d4f2df264fcd
-      Tags:
-        - Key: Name
-          Value: !Sub "${ProjectName}-github-oidc-provider"
-        - Key: Project
-          Value: !Ref ProjectName
-        - Key: ManagedBy
-          Value: CloudFormation-GitSync
-
   # ── SAM Deployment Artifacts Buckets ───────────────────────────
   # sam deploy uploads packaged templates/code here before creating the
   # dev/prod CloudFormation stacks.
@@ -88,7 +68,9 @@ Resources:
   # One role, trusted by this GitHub repo, used by both the dev and prod
   # deploy workflows. Least-privilege: scoped explicitly to the dev and
   # prod CloudFormation stacks, DynamoDB tables, and artifacts buckets —
-  # nothing broader.
+  # nothing broader. The GitHub OIDC provider itself is a single per-account
+  # entity already managed outside this stack — referenced by ARN, not owned
+  # here, since only one stack can own it and this account is shared.
   GitHubActionsRole:
     Type: AWS::IAM::Role
     Properties:
@@ -99,15 +81,16 @@ Resources:
         Statement:
           - Effect: Allow
             Principal:
-              Federated: !Ref GithubOidcProvider
+              Federated: !Sub "arn:aws:iam::${AWS::AccountId}:oidc-provider/token.actions.githubusercontent.com"
             Action: sts:AssumeRoleWithWebIdentity
             Condition:
               StringEquals:
                 token.actions.githubusercontent.com:aud: sts.amazonaws.com
-                token.actions.githubusercontent.com:repository: !Sub "${GitHubOrg}/${GitHubRepo}"
               StringLike:
-               
-                token.actions.githubusercontent.com:sub: !Sub "repo:${GitHubOrg}@*/${GitHubRepo}@*:*"
+                # This org has GitHub's "customize subject claims" feature enabled, so the
+                # real sub claim is "repo:{org}@{orgId}/{repo}@{repoId}:ref:refs/heads/main"
+                # instead of the plain form — hence the id wildcards. Limited to main only.
+                token.actions.githubusercontent.com:sub: !Sub "repo:${GitHubOrg}@*/${GitHubRepo}@*:ref:refs/heads/main"
       Policies:
         - PolicyName: cloudformation-deploy
           PolicyDocument:
@@ -193,6 +176,6 @@ Outputs:
       Name: !Sub "${ProjectName}-GitHubActionsRoleArn"
 
   OidcProviderArn:
-    Value: !Ref GithubOidcProvider
+    Value: !Sub "arn:aws:iam::${AWS::AccountId}:oidc-provider/token.actions.githubusercontent.com"
     Export:
       Name: !Sub "${ProjectName}-OidcProviderArn"
